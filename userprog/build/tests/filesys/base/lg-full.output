@@ -16,15 +16,19 @@ Executing 'lg-full':
 () create "quux"
 () open "quux"
 () writing "quux"
-() write 75678 bytes at offset 0 in "quux" failed: FAILED
-lg-full: exit(1)
+() close "quux"
+() open "quux" for verification
+() verified contents of "quux"
+() close "quux"
+() end
+lg-full: exit(0)
 Execution of 'lg-full' complete.
-Timer: 60 ticks
-Thread: 30 idle ticks, 27 kernel ticks, 3 user ticks
+Timer: 65 ticks
+Thread: 30 idle ticks, 27 kernel ticks, 8 user ticks
 hd0:0: 0 reads, 0 writes
-hd0:1: 98 reads, 242 writes
+hd0:1: 259 reads, 550 writes
 hd1:0: 107 reads, 0 writes
-Console: 911 characters output
+Console: 956 characters output
 Keyboard: 0 keys pressed
 Exception: 0 page faults
 Powering off...

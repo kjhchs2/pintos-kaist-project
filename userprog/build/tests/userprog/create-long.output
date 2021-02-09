@@ -13,14 +13,14 @@ Boot complete.
 Putting 'create-long' into the file system...
 Executing 'create-long':
 (create-long) begin
-(create-long) create("x..."): 1
+(create-long) create("x..."): 0
 (create-long) end
 create-long: exit(0)
 Execution of 'create-long' complete.
 Timer: 58 ticks
-Thread: 30 idle ticks, 26 kernel ticks, 2 user ticks
+Thread: 30 idle ticks, 27 kernel ticks, 2 user ticks
 hd0:0: 0 reads, 0 writes
-hd0:1: 80 reads, 234 writes
+hd0:1: 84 reads, 250 writes
 hd1:0: 103 reads, 0 writes
 Console: 888 characters output
 Keyboard: 0 keys pressed

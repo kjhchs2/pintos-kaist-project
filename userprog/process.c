@@ -379,7 +379,7 @@ int process_add_file (struct file *f){
     curr->file_table[curr->fd] = f;
     int tmp = curr->fd;
     curr->fd++;
-    return tmp;  //늘려준 fd를 리턴
+    return tmp;  
 }
 
 struct file *process_get_file(int fd) {
@@ -392,10 +392,10 @@ struct file *process_get_file(int fd) {
 void process_close_file(int fd){
     /* 파일 디스크립터에 해당하는 파일을 닫음 */
     /* 파일 디스크립터 테이블 해당 엔트리 초기화 */
-    file_close(process_get_file(fd));
-
     struct thread* curr = thread_current();
     curr->file_table[fd] = NULL;
+
+    file_close(process_get_file(fd));
 }
 
 

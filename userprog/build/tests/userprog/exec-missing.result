@@ -1,7 +1,25 @@
 FAIL
-Kernel panic in run: PANIC at ../../userprog/process.c:77 in initd(): Fail to launch initd
-Call stack: 0x8004216a01 0x800421a09a 0x80042074a1
-Translation of call stack:
-0x0000008004216a01: debug_panic (lib/kernel/debug.c:32)
-0x000000800421a09a: initd (userprog/process.c:78)
-0x00000080042074a1: kernel_thread (threads/thread.c:449)
+Test output failed to match any acceptable form.
+
+Acceptable output:
+  (exec-missing) begin
+  load: no-such-file: open failed
+  exec-missing: exit(-1)
+Differences in `diff -u' format:
+  (exec-missing) begin
+- load: no-such-file: open failed
+- exec-missing: exit(-1)
++ (exec-missing) exec("no-such-file"): 3
++ (exec-missing) end
++ exec-missing: exit(0)
+Acceptable output:
+  (exec-missing) begin
+  (exec-missing) exec("no-such-file"): -1
+  exec-missing: exit(-1)
+Differences in `diff -u' format:
+  (exec-missing) begin
+- (exec-missing) exec("no-such-file"): -1
+- exec-missing: exit(-1)
++ (exec-missing) exec("no-such-file"): 3
++ (exec-missing) end
++ exec-missing: exit(0)

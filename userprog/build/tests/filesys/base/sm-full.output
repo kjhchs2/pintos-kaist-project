@@ -16,15 +16,19 @@ Executing 'sm-full':
 () create "quux"
 () open "quux"
 () writing "quux"
-() write 5678 bytes at offset 0 in "quux" failed: FAILED
-sm-full: exit(1)
+() close "quux"
+() open "quux" for verification
+() verified contents of "quux"
+() close "quux"
+() end
+sm-full: exit(0)
 Execution of 'sm-full' complete.
-Timer: 59 ticks
-Thread: 30 idle ticks, 26 kernel ticks, 3 user ticks
+Timer: 61 ticks
+Thread: 30 idle ticks, 27 kernel ticks, 4 user ticks
 hd0:0: 0 reads, 0 writes
-hd0:1: 98 reads, 242 writes
+hd0:1: 123 reads, 278 writes
 hd1:0: 107 reads, 0 writes
-Console: 910 characters output
+Console: 956 characters output
 Keyboard: 0 keys pressed
 Exception: 0 page faults
 Powering off...

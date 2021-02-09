@@ -29,10 +29,10 @@ Executing 'syn-write':
 (syn-write) wait for child 1 of 10 returned 4 (expected 0): FAILED
 syn-write: exit(1)
 Execution of 'syn-write' complete.
-Timer: 63 ticks
-Thread: 30 idle ticks, 30 kernel ticks, 4 user ticks
+Timer: 64 ticks
+Thread: 30 idle ticks, 29 kernel ticks, 5 user ticks
 hd0:0: 0 reads, 0 writes
-hd0:1: 109 reads, 490 writes
+hd0:1: 132 reads, 512 writes
 hd1:0: 226 reads, 0 writes
 Console: 1546 characters output
 Keyboard: 0 keys pressed

@@ -1,8 +1,5 @@
 {
     "files.associations": {
-        "__config": "cpp",
-        "__functional_03": "cpp",
-        "functional": "cpp",
-        "locale": "cpp"
+        "file.h": "c"
     }
 }
