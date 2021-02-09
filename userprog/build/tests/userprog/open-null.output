@@ -13,14 +13,15 @@ Boot complete.
 Putting 'open-null' into the file system...
 Executing 'open-null':
 (open-null) begin
-(open-null) end
-Execution of 'open-null' complete.
-Timer: 549 ticks
-Thread: 30 idle ticks, 518 kernel ticks, 1 user ticks
+Kernel PANIC at ../../filesys/directory.c:110 in dir_lookup(): assertion `name != NULL' failed.
+Call stack: 0x8004216a01 0x800421d786 0x800421c11c 0x800421b843 0x800421bb9e 0x800421b57c 0x4000fd 0x40015b 0x400bfc.
+The `backtrace' program can make call stacks useful.
+Read "Backtraces" in the "Debugging Tools" chapter
+of the Pintos documentation for more information.
+Timer: 57 ticks
+Thread: 30 idle ticks, 26 kernel ticks, 1 user ticks
 hd0:0: 0 reads, 0 writes
-hd0:1: 80 reads, 232 writes
+hd0:1: 81 reads, 232 writes
 hd1:0: 102 reads, 0 writes
-Console: 823 characters output
-Keyboard: 0 keys pressed
-Exception: 0 page faults
-Powering off...
+Console: 1138 characters output
+Key

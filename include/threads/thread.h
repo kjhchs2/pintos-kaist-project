@@ -5,6 +5,7 @@
 #include <list.h>
 #include <stdint.h>
 #include "threads/interrupt.h"
+#include "synch.h"
 #ifdef VM
 #include "vm/vm.h"
 #endif
@@ -104,6 +105,23 @@ struct thread {
 #ifdef USERPROG
 	/* Owned by userprog/process.c. */
 	uint64_t *pml4;                     /* Page map level 4 */
+
+    bool create_status;
+    bool load_status;
+    int exit_code;
+
+    struct thread *parent;
+    struct list child_list;
+    struct list_elem child_elem;
+
+    struct semaphore child_lock;
+    struct semaphore load_lock;    
+    struct semaphore memory_lock;
+    
+    struct file* file_table[64];
+
+    int fd ;
+
 #endif
 #ifdef VM
 	/* Table for whole virtual memory owned by thread. */
@@ -160,5 +178,8 @@ bool cmp_priority(const struct list_elem *a, const struct list_elem *b, void *au
 void donate_priority(void);
 void remove_with_lock(struct lock *lock);
 void refresh_priority(void);
+
+struct thread *get_child_process(int pid);
+void remove_child_process(struct thread *cp);
 
 #endif /* threads/thread.h */

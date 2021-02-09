@@ -15,13 +15,14 @@ Putting 'sample.txt' into the file system...
 Executing 'open-normal':
 (open-normal) begin
 (open-normal) end
+open-normal: exit(0)
 Execution of 'open-normal' complete.
-Timer: 547 ticks
-Thread: 30 idle ticks, 516 kernel ticks, 1 user ticks
+Timer: 59 ticks
+Thread: 30 idle ticks, 27 kernel ticks, 2 user ticks
 hd0:0: 0 reads, 0 writes
-hd0:1: 107 reads, 248 writes
+hd0:1: 111 reads, 248 writes
 hd1:0: 105 reads, 0 writes
-Console: 898 characters output
+Console: 917 characters output
 Keyboard: 0 keys pressed
 Exception: 0 page faults
 Powering off...

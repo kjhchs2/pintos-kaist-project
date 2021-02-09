@@ -201,6 +201,18 @@ tid_t thread_create(const char *name, int priority,
     init_thread(t, name, priority);
     tid = t->tid = allocate_tid();
 
+    // project2
+    sema_init(&t->child_lock, 0);
+    sema_init(&t->load_lock, 0);
+
+    t->parent = thread_current();
+    list_push_back(&thread_current()->child_list, &t->child_elem); //???
+
+    t->fd = 2;
+    for (int i = 0 ; i < 64 ; i++){
+        t->file_table[i] = NULL;
+    }
+
     /* Call the kernel_thread if it scheduled.
 	 * Note) rdi is 1st argument, and rsi is 2nd argument. */
     t->tf.rip = (uintptr_t)kernel_thread;
@@ -217,7 +229,8 @@ tid_t thread_create(const char *name, int priority,
 
     // priority scheduling
     int curr_priority = thread_get_priority();
-    if (curr_priority < priority){
+    if (curr_priority < priority)
+    {
         thread_yield();
     }
     return tid;
@@ -305,6 +318,7 @@ void thread_exit(void)
 
     /* Just set our status to dying and schedule another process.
 	   We will be destroyed during the call to schedule_tail(). */
+    
     intr_disable();
     do_schedule(THREAD_DYING);
     NOT_REACHED();
@@ -339,10 +353,12 @@ void thread_set_priority(int new_priority)
     thread_current()->init_priority = new_priority;
     refresh_priority();
 
-    if (thread_current()->priority > old_priority){ // priority inversion 발생 가능성 -> donate로 해결 
+    if (thread_current()->priority > old_priority)
+    { // priority inversion 발생 가능성 -> donate로 해결 
         donate_priority();
     }
-    else if (thread_current()->priority < old_priority){
+    else if (thread_current()->priority < old_priority)
+    {
         test_max_priority();
     }
 }
@@ -453,6 +469,7 @@ init_thread(struct thread *t, const char *name, int priority)
     t->init_priority = priority;
     t->wait_on_lock = NULL;
     list_init(&t->donations);
+    list_init(&t->child_list);
 }
 
 /* Chooses and returns the next thread to be scheduled.  Should
@@ -703,55 +720,87 @@ int64_t get_next_tick_to_awake(void)
 }
 
 // 1-2
-bool cmp_priority (const struct list_elem *a, const struct list_elem *b, void *aux UNUSED){
+bool cmp_priority (const struct list_elem *a, const struct list_elem *b, void *aux UNUSED)
+{
     return list_entry(a, struct thread, elem)->priority > list_entry(b, struct thread, elem)->priority;
 }
 
-void test_max_priority(void){
-    if (!list_empty(&ready_list)){
-        if (list_entry(list_front(&ready_list), struct thread, elem)->priority > thread_get_priority()){
+void test_max_priority(void)
+{
+    if (!list_empty(&ready_list))
+    {
+        if (list_entry(list_front(&ready_list), struct thread, elem)->priority > thread_get_priority())
+        {
             thread_yield();
         }
     }
 }
 
-void donate_priority(void){
+void donate_priority(void)
+{
     struct thread *t = thread_current();
     struct lock *lock = t->wait_on_lock;
     int depth = 0;
-    while (lock && depth < NESTED_DEPTH_LIMIT){ // 체인 맨 끝까지 
-        if (t->priority > lock->holder->priority){
+    while (lock && depth < NESTED_DEPTH_LIMIT)
+    { // 체인 맨 끝까지 
+        if (t->priority > lock->holder->priority)
+        {
             lock->holder->priority = t->priority;
             t = lock->holder;
             lock = t->wait_on_lock;
         }
     }
-    
 }
 
 // donation list 중 해당 lock 기다리는 애들 다 날려준다 
-void remove_with_lock(struct lock *lock){ 
+void remove_with_lock(struct lock *lock)
+{ 
     struct list_elem *e = list_begin(&thread_current()->donations);
 
     // donation list 순회하며 찾는다 
-    for (e; e != list_end(&thread_current()->donations); e = list_next(e)){
-        if (list_entry(e, struct thread, donation_elem)->wait_on_lock == lock){
+    for (e; e != list_end(&thread_current()->donations); e = list_next(e))
+    {
+        if (list_entry(e, struct thread, donation_elem)->wait_on_lock == lock)
+        {
             list_remove(e);
         }
     }
 }
 
 // 스레드의 우선순위가 변경 되었을때 donation 을 고려하여 우선순위를 다시 결정 하는 함수
-void refresh_priority(void){
+void refresh_priority(void)
+{
     struct thread *t = thread_current();
     struct lock *lock = t->wait_on_lock;
     
     t->priority = t->init_priority; // 이전 priority로 되돌리기 
-    if(!list_empty(&(thread_current()->donations))){ // 근데 dl에 남아있으면서, 얘가 나보다 크면 바꿔줘야지 
+    if(!list_empty(&(thread_current()->donations)))
+    { // 근데 dl에 남아있으면서, 얘가 나보다 크면 바꿔줘야지 
         struct thread *dona_front = list_entry(list_front(&thread_current()->donations), struct thread, donation_elem);
-        if (t->priority < dona_front->priority){ // 복구한 priority보다 dona_list 맨앞의 pri가 더 크다면 그 우선순위로 ㄱ 
+        if (t->priority < dona_front->priority)
+        { // 복구한 priority보다 dona_list 맨앞의 pri가 더 크다면 그 우선순위로 ㄱ 
             t->priority = dona_front->priority;
         }
     }
-    
+}
+
+
+struct thread *get_child_process(int tid)
+{
+    struct list_elem *e = list_begin(&thread_current()->child_list);
+    for (e; e != list_end(&thread_current()->child_list); e = list_next(e))
+    {
+        struct thread *tmp_child = list_entry(e, struct thread, child_elem);
+        if (tmp_child->tid == tid)
+        {
+            return tmp_child;
+        }
+    }
+    return NULL;
+}
+
+void remove_child_process(struct thread *cp)
+{
+    list_remove(&cp->child_elem);
+    // palloc_free_page(cp);
 }

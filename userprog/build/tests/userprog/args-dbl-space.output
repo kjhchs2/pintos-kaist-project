@@ -4,7 +4,7 @@ Kernel command line: -q -f put args-dbl-space run 'args-dbl-space two  spaces!'
 Pintos booting with: 
 	base_mem: 0x0 ~ 0x9fc00 (Usable: 639 kB)
 	ext_mem: 0x100000 ~ 0x13e0000 (Usable: 19,328 kB)
-Calibrating timer...  130,867,200 loops/s.
+Calibrating timer...  157,081,600 loops/s.
 hd0:0: detected 297 sector (148 kB) disk, model "QEMU HARDDISK", serial "QM00001"
 hd0:1: detected 20,160 sector (9 MB) disk, model "QEMU HARDDISK", serial "QM00002"
 hd1:0: detected 102 sector (51 kB) disk, model "QEMU HARDDISK", serial "QM00003"
@@ -12,15 +12,21 @@ Formatting file system...done.
 Boot complete.
 Putting 'args-dbl-space' into the file system...
 Executing 'args-dbl-space two  spaces!':
-Kernel PANIC at ../../lib/string.c:274 in strlen(): assertion `string' failed.
-Call stack: 0x800421685f 0x800421612d 0x800421a40d 0x800421a247 0x8004219ebf 0x80042073de.
-The `backtrace' program can make call stacks useful.
-Read "Backtraces" in the "Debugging Tools" chapter
-of the Pintos documentation for more information.
-Timer: 63 ticks
-Thread: 30 idle ticks, 32 kernel ticks, 1 user ticks
+(args) begin
+(args) argc = 3
+(args) argv[0] = 'args-dbl-space'
+(args) argv[1] = 'two'
+(args) argv[2] = 'spaces!'
+(args) argv[3] = null
+(args) end
+args-dbl-space: exit(0)
+Execution of 'args-dbl-space' complete.
+Timer: 59 ticks
+Thread: 30 idle ticks, 27 kernel ticks, 2 user ticks
 hd0:0: 0 reads, 0 writes
 hd0:1: 80 reads, 232 writes
 hd1:0: 102 reads, 0 writes
-Console: 1124 characters output
-Key
+Console: 1010 characters output
+Keyboard: 0 keys pressed
+Exception: 0 page faults
+Powering off...

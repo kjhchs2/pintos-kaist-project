@@ -15,13 +15,14 @@ Executing 'create-bound':
 (create-bound) begin
 (create-bound) create("quux.dat"): 1
 (create-bound) end
+create-bound: exit(0)
 Execution of 'create-bound' complete.
-Timer: 545 ticks
-Thread: 30 idle ticks, 514 kernel ticks, 1 user ticks
+Timer: 58 ticks
+Thread: 30 idle ticks, 26 kernel ticks, 2 user ticks
 hd0:0: 0 reads, 0 writes
 hd0:1: 80 reads, 238 writes
 hd1:0: 105 reads, 0 writes
-Console: 881 characters output
+Console: 901 characters output
 Keyboard: 0 keys pressed
 Exception: 0 page faults
 Powering off...

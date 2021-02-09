@@ -1,8 +1,8 @@
 {
     "files.associations": {
-        "atomic": "cpp",
-        "cstdint": "cpp",
-        "mutex": "cpp",
-        "typeinfo": "cpp"
+        "__config": "cpp",
+        "__functional_03": "cpp",
+        "functional": "cpp",
+        "locale": "cpp"
     }
 }

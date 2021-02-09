@@ -1,10 +1,1 @@
-FAIL
-Kernel panic in run: PANIC at ../../lib/string.c:274 in strlen(): assertion `string' failed.
-Call stack: 0x800421685f 0x800421612d 0x800421a40d 0x800421a247 0x8004219ebf 0x80042073de
-Translation of call stack:
-0x000000800421685f: debug_panic (lib/kernel/debug.c:32)
-0x000000800421612d: strlen (lib/string.c:276)
-0x000000800421a40d: argument_stack (userprog/process.c:321)
-0x000000800421a247: process_exec (userprog/process.c:222)
-0x0000008004219ebf: initd (userprog/process.c:75)
-0x00000080042073de: kernel_thread (threads/thread.c:433)
+PASS

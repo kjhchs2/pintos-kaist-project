@@ -12,8 +12,6 @@ void syscall_handler(struct intr_frame *);
 // 함수 추가
 void check_address(void *addr);
 void get_argument(void *rsp, uint64_t *arg, int count);
-void halt(void);
-void exit(int status);
 
 /* System call.
  *
@@ -37,7 +35,159 @@ void syscall_init(void)
     * mode stack. Therefore, we masked the FLAG_FL. */
     write_msr(MSR_SYSCALL_MASK,
               FLAG_IF | FLAG_TF | FLAG_DF | FLAG_IOPL | FLAG_AC | FLAG_NT);
+
+
+    //project2
+    lock_init(&filesys_lock);
 }
+
+// 함수 추가
+void check_address(void *addr){
+    ASSERT(is_user_vaddr(addr));
+}
+
+void get_argument(void *rsp, uint64_t *arg, int count){
+    for (int i = 0; i < count; i++)
+    {
+        //check_address(rsp);
+        rsp = (uintptr_t *)rsp + 1;
+        arg[i] = *(uintptr_t *)rsp;
+    }
+}
+
+void halt(void){
+    power_off();
+}
+
+void exit(int status){
+    printf("%s: exit(%d)\n", thread_name(), status);
+    thread_current()->exit_code = status;
+    thread_exit();
+}
+
+int exec(const *cmd_line){
+    struct thread *child_process;
+    tid_t child_t = process_create_initd(cmd_line);
+    child_process = get_child_process(child_t);
+
+    if( child_process != NULL){
+        sema_down(&child_process->parent->load_lock);
+        if(!child_process -> load_status){
+            return -1;
+        }
+    }
+    return child_t;
+}
+
+int wait(tid_t tid){
+    return process_wait(tid);
+}
+
+int open(const char* file){
+    struct file* return_file = filesys_open(file);
+    struct thread* curr = thread_current();
+    if( return_file != NULL){
+        return process_add_file(return_file);
+    }
+    else{
+        return -1;
+    }
+}
+
+int filesize(int fd){
+    /* 파일 디스크립터를 이용하여 파일 객체 검색 */
+    /* 해당 파일의 길이를 리턴 */
+    /* 해당 파일이 존재하지 않으면 -1 리턴 */
+    if (process_get_file(fd) != NULL){
+        return file_length(process_get_file(fd));
+    }
+    else{
+        return -1;
+    }
+}
+
+int read(int fd, void* buffer, unsigned size){
+    /* 파일에 동시 접근이 일어날 수 있으므로 Lock 사용 */
+    /* 파일 디스크립터를 이용하여 파일 객체 검색 */
+    /* 파일 디스크립터가 0일 경우 키보드에 입력을 버퍼에 저장 후
+    버퍼의 저장한 크기를 리턴 (input_getc() 이용) */
+    /* 파일 디스크립터가 0이 아닐 경우 파일의 데이터를 크기만큼 저
+    장 후 읽은 바이트 수를 리턴 */
+    lock_acquire(&filesys_lock);
+    // lock_release는 언제하냐?.?
+    if (fd == 0){
+        buffer = input_getc();
+        return buffer;
+    }
+    else{
+        struct file* curr_file = process_get_file(fd);
+        if(curr_file != NULL){
+            return file_read(curr_file, buffer, size);
+        }
+        else {
+            return -1;
+        }
+    }
+}
+
+int write(int fd, const void *buffer, unsigned size){
+    lock_acquire(&filesys_lock);
+    // lock_release는 언제하냐?.?
+    if (fd == 1)
+    {
+        putbuf(buffer, size);
+        return size;
+    }
+    else{
+        struct file* curr_file = process_get_file(fd);
+        if(curr_file != NULL){
+            return file_write(curr_file, buffer, size);
+        }
+        else {
+            return -1;
+        }
+    }
+}
+
+void seek(int fd, unsigned position){
+    struct file* curr_file = process_get_file(fd);
+    // now_offset = file_tell(curr_file);
+    if (curr_file != NULL){
+        file_seek(curr_file, position);
+    }
+}
+
+unsigned tell(int fd){
+    struct file* curr_file = process_get_file(fd);
+    if (curr_file != NULL){
+        return file_tell(curr_file);
+    }
+    else{
+        return -1;
+    }
+}
+
+void close(int fd){
+    // struct file* curr_file = process_get_file(fd);
+    // file_close(curr_file);
+    // struct thread* curr = thread_current();
+    // curr->file_table[fd] = NULL;
+    process_close_file(fd);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* The main system call interface */
 void syscall_handler(struct intr_frame *f UNUSED)
 {
@@ -61,11 +211,9 @@ void syscall_handler(struct intr_frame *f UNUSED)
     switch (f->R.rax)
     {
     case SYS_HALT:
-        // halt();
+        halt();
         break;
     case SYS_EXIT:
-        /* code */
-        // exit(0);
         exit(f->R.rdi);
         break;
     case SYS_FORK:
@@ -73,11 +221,11 @@ void syscall_handler(struct intr_frame *f UNUSED)
         break;
     case SYS_EXEC:
         /* code */
-        // f->R.rax = exec();
+        exec(f->R.rdi);
         break;
     case SYS_WAIT:
         /* code */
-
+        wait(f->R.rdi);
         break;
     case SYS_CREATE:
         /* code */
@@ -89,89 +237,36 @@ void syscall_handler(struct intr_frame *f UNUSED)
         break;
     case SYS_OPEN:
         /* code */
+        open(f->R.rdi);
         break;
     case SYS_FILESIZE:
         /* code */
+        filesize(f->R.rdi);
         break;
     case SYS_READ:
-        /* code */
-        // printf("read\n");
+        read(f->R.rdi, f->R.rsi, f->R.rdx);
+        lock_release(&filesys_lock);
         break;
     case SYS_WRITE:
         /* code */
         write(f->R.rdi, f->R.rsi, f->R.rdx);
-        // printf("rdi : %d\n", f->R.rdi);
-        // printf("rsi : %s\n", f->R.rsi);
-        // printf("rdx : %d\n", f->R.rdx);
-        // exit(f->R.rdi);
-        // thread_exit();
-        // thread_exit();
-        // printf("write\n");
-        // printf("(args) begin\n");
-        // printf("(args) argc = %d\n", f->R.rdi);
-        // printf("(args) arg[0] = %s\n", arggg[0]);
-        // printf("(args) arg[1] = null\n");
-        // printf("end\n");
+        lock_release(&filesys_lock);
         break;
     case SYS_SEEK:
         /* code */
+        seek(f->R.rdi, f->R.rsi);
         break;
     case SYS_TELL:
         /* code */
+        tell(f->R.rdi);
         break;
     case SYS_CLOSE:
         /* code */
+        close(f->R.rdi);
         break;
     default:
-        // printf("system call!\n");
-        // exit(0);
+        thread_exit();
         break;
     }
     // thread_exit();
 }
-// 함수 추가
-void check_address(void *addr)
-{
-    ASSERT(is_user_vaddr(addr));
-}
-
-void get_argument(void *rsp, uint64_t *arg, int count)
-{
-    for (int i = 0; i < count; i++)
-    {
-        //check_address(rsp);
-        rsp = (uintptr_t *)rsp + 1;
-        arg[i] = *(uintptr_t *)rsp;
-    }
-}
-// void halt(void)
-// {
-//     power_off();
-// // }
-void exit(int status)
-{
-    printf("%s: exit(%d)\n", thread_name(), status);
-    thread_exit();
-}
-
-void write(int fd, const void *buffer, unsigned size)
-{
-    if (fd == 1)
-    {
-        putbuf(buffer, size);
-        return size;
-    }
-    // printf("!!! write");
-}
-// // pid_t exec(const *cmd_line)
-// // {
-
-// // }
-// bool create(const char *file, unsigned initial_size)
-// {
-// }
-
-// bool remove(const char *file)
-// {
-//     filesys_remove(file);
-// }

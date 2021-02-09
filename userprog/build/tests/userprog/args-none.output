@@ -12,7 +12,6 @@ Formatting file system...done.
 Boot complete.
 Putting 'args-none' into the file system...
 Executing 'args-none':
-parse[0]: 0x800423c000, 9
 (args) begin
 (args) argc = 1
 (args) argv[0] = 'args-none'
@@ -20,12 +19,12 @@ parse[0]: 0x800423c000, 9
 (args) end
 args-none: exit(0)
 Execution of 'args-none' complete.
-Timer: 542 ticks
-Thread: 30 idle ticks, 511 kernel ticks, 1 user ticks
+Timer: 58 ticks
+Thread: 30 idle ticks, 26 kernel ticks, 2 user ticks
 hd0:0: 0 reads, 0 writes
 hd0:1: 80 reads, 232 writes
 hd1:0: 102 reads, 0 writes
-Console: 925 characters output
+Console: 897 characters output
 Keyboard: 0 keys pressed
 Exception: 0 page faults
 Powering off...

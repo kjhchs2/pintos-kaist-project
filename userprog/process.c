@@ -57,6 +57,8 @@ tid_t process_create_initd(const char *file_name)
     /* Create a new thread to execute FILE_NAME. */
     // tid = thread_create (file_name, PRI_DEFAULT, initd, fn_copy);
     tid = thread_create(real_file_name, PRI_DEFAULT, initd, fn_copy);
+
+
     if (tid == TID_ERROR)
         palloc_free_page(fn_copy);
     return tid;
@@ -71,7 +73,6 @@ initd(void *f_name)
 #endif
 
     process_init();
-
     if (process_exec(f_name) < 0)
         PANIC("Fail to launch initd\n");
     NOT_REACHED();
@@ -172,6 +173,7 @@ error:
 // ppt에서 start_process
 int process_exec(void *f_name)
 {
+
     char *file_name = f_name;
     bool success;
     char *next_ptr;
@@ -181,10 +183,10 @@ int process_exec(void *f_name)
     save_ptr = strtok_r(f_name, " ", &next_ptr);
     save_arg[0] = save_ptr;
 
-    save_ptr = strtok_r(NULL, " ", &next_ptr);
     // printf("%s\n, %d\n", save_ptr, token_cnt);
 
     // file_name = save_ptr;
+
     while (save_ptr != NULL)
     {
         token_cnt++;
@@ -211,7 +213,7 @@ int process_exec(void *f_name)
     /* If load failed, quit. */
 
     if (!success)
-        return -1;
+        return -1;    //thread_exit()안하고??? 
 
     // printf("%d", token_cnt);
 
@@ -219,10 +221,10 @@ int process_exec(void *f_name)
     // printf("여기가 첫번째다 임마 : %p , %s\n", save_arg[0], save_arg[0]);
     argument_stack(save_arg, token_cnt, &_if.rsp);
 
-    _if.R.rdi = token_cnt;
+    _if.R.rdi = token_cnt - 1;
     _if.R.rsi = (uintptr_t *)_if.rsp + 1;
 
-    hex_dump(_if.rsp, _if.rsp, USER_STACK - _if.rsp, true);
+    // hex_dump(_if.rsp, _if.rsp, USER_STACK - _if.rsp, true);
     /////////////////////////////////
 
     /* Start switched process. */
@@ -246,12 +248,18 @@ int process_wait(tid_t child_tid UNUSED)
     /* XXX: Hint) The pintos exit if process_wait (initd), we recommend you
     * XXX:       to add infinite loop here before
     * XXX:       implementing the process_wait. */
-    // struct thread *child_t = list_entry(child_tid, struct thread, elem);
-    int t = 0;
-    // while (t++ < 10000000)
-    while (t++ < 1000000000)
-        ;
-    return -1;
+    struct thread *tmp_child = get_child_process(child_tid);
+
+    if (tmp_child == NULL){
+        return -1;
+    }
+    if (tmp_child == thread_current()){
+        return -1;
+    }
+
+    sema_down(&tmp_child->child_lock);
+
+    list_remove(&tmp_child->child_elem);
 }
 
 /* Exit the process. This function is called by thread_exit (). */
@@ -262,8 +270,13 @@ void process_exit(void)
     * TODO: Implement process termination message (see
     * TODO: project2/process_termination.html).
     * TODO: We recommend you to implement process resource cleanup here. */
+    
+    for( int i = curr->fd; i >2; i--){
+        process_close_file(i);
+    }
 
     process_cleanup();
+    sema_up(&curr->child_lock);
 }
 
 /* Free the current process's resources. */
@@ -314,12 +327,12 @@ void argument_stack(char **parse, int count, void **rsp)
     // printf("count : %d\n", count);
     //! 문자열 저장
 
-    for (int i = count - 1; i > -1; i--)
+    for (int i = count - 2; i > -1; i--)
     {
-        printf("여기!!\n");
+        // printf("여기!!\n");
         for_word_align = for_word_align + strlen(parse[i]);
-        printf("여기2!!\n");
-        printf("parse[%d]: %p, %d\n", i, parse[i], for_word_align);
+        // printf("여기2!!\n");
+        // printf("parse[%d]: %p, %d\n", i, parse[i], for_word_align);
         for (int j = strlen(parse[i]); j > -1; j--)
         {
             *rsp = (char *)*rsp - 1;
@@ -345,7 +358,7 @@ void argument_stack(char **parse, int count, void **rsp)
     **(uint64_t **)rsp = NULL;
 
     // printf("argument_stack3\n");
-    for (int i = count - 1; i > -1; i--)
+    for (int i = count - 2; i > -1; i--)
     {
         *rsp = (uintptr_t *)*rsp - 1;
         **(uint64_t **)rsp = word_address[i];
@@ -356,6 +369,35 @@ void argument_stack(char **parse, int count, void **rsp)
     **(uint64_t **)rsp = 0;
     // printf("argument_stack5\n");
 }
+
+// project2
+int process_add_file (struct file *f){
+    /* 파일 객체를 파일 디스크립터 테이블에 추가
+    /* 파일 디스크립터의 최대값 1 증가
+    /* 파일 디스크립터 리턴 */
+    struct thread* curr = thread_current();
+    curr->file_table[curr->fd] = f;
+    int tmp = curr->fd;
+    curr->fd++;
+    return tmp;  //늘려준 fd를 리턴
+}
+
+struct file *process_get_file(int fd) {
+    /* 파일 디스크립터에 해당하는 파일 객체를 리턴 */
+    /* 없을 시 NULL 리턴 */
+    struct thread* curr = thread_current();
+    return curr->file_table[fd];
+}
+
+void process_close_file(int fd){
+    /* 파일 디스크립터에 해당하는 파일을 닫음 */
+    /* 파일 디스크립터 테이블 해당 엔트리 초기화 */
+    file_close(process_get_file(fd));
+
+    struct thread* curr = thread_current();
+    curr->file_table[fd] = NULL;
+}
+
 
 /* We load ELF binaries.  The following definitions are taken
  * from the ELF specification, [ELF1], more-or-less verbatim.  */
